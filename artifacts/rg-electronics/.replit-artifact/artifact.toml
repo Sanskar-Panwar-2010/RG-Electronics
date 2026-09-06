@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "R G Electronics"
+description = "A responsive marketing and product catalogue website for R G Electronics, a New Delhi provider of end-to-end electronic security and communications infrastructure, with product discovery and enquiry capture."
+version = "1.0.0"
+id = "artifacts/rg-electronics"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23816
+
+[services.development]
+run = "pnpm --filter @workspace/rg-electronics run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/rg-electronics", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/rg-electronics/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23816"
+BASE_PATH = "/"

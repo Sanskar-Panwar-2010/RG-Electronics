@@ -1,6 +1,6 @@
-# [Project name]
+# R G Electronics
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Responsive marketing and catalogue site for R G Electronics, a New Delhi provider of electronic security and communications infrastructure.
 
 ## Run & Operate
 
@@ -22,23 +22,34 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/rg-electronics/src/App.tsx` — routes, catalogue data, shared shell, and page UI
+- `artifacts/rg-electronics/src/index.css` — typography, focus treatment, motion, and global visual tokens
+- `artifacts/rg-electronics/public/images/` — generated infrastructure photography used by the marketing pages
+- `artifacts/rg-electronics/index.html` — document metadata and social preview defaults
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first MVP is frontend-only: the enquiry form validates locally and shows success/error feedback without sending customer data to a third-party service.
+- Product catalogue content is local and intentionally small; each product detail route is driven from the same catalogue records used by search and featured systems.
+- The visual system uses photography-led light/dark canvases and Action Blue as the only interaction accent, with no decorative gradients or UI shadows.
+- Wouter keeps routing prefix-aware through the artifact base path so the same app works in preview and deployment.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Home, About, Systems catalogue, product detail, and Contact pages
+- Client-side product search and category filtering
+- Product enquiry CTAs that prefill the contact form subject
+- Accessible responsive navigation, focus states, skip link, reduced-motion support, and New Delhi service-area map
+- Contact form validation with inline errors, first-error focus, and live success/error feedback
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Use the attached Apple-inspired design direction as the visual source of truth while adapting it for a high-trust infrastructure company.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- The app uses generated/local images in `public/images`; keep image paths rooted so Vite serves them through the artifact preview path.
+- If live lead delivery is added later, connect the current form submission to an approved email/CRM integration rather than adding credentials to the frontend.
 
 ## Pointers
 
