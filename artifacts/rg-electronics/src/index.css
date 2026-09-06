@@ -291,9 +291,34 @@ button, a, input, textarea { touch-action: manipulation; }
 .reveal-delay-2 { animation-delay: .16s; }
 .reveal-delay-3 { animation-delay: .24s; }
 @keyframes reveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.intro-loader {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(41, 151, 255, .12), transparent 31rem),
+    #0c171d;
+  color: #f4f2ec;
+  isolation: isolate;
+}
+.intro-loader__grid {
+  opacity: .34;
+  background-image:
+    linear-gradient(rgba(170, 216, 225, .09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(170, 216, 225, .09) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+}
+.intro-loader__panel {
+  z-index: 5;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .08), transparent 22%, transparent 78%, rgba(0, 0, 0, .1)),
+    #007cae;
+  will-change: transform;
+}
+.intro-loader__panel--left { transform-origin: left center; }
+.intro-loader__panel--right { transform-origin: right center; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  .intro-loader { display: none; }
 }
 
 /**

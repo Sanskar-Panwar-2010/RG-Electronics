@@ -177,6 +177,97 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
+function SiteIntro() {
+  const reduceMotion = usePrefersReducedMotion();
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (reduceMotion) {
+      setVisible(false);
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const timer = window.setTimeout(() => setVisible(false), 1450);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [reduceMotion]);
+
+  if (!visible) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="intro-loader fixed inset-0 z-[100] overflow-hidden"
+        role="status"
+        aria-label="Loading R G Electronics"
+        initial={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+      >
+        <div className="intro-loader__grid absolute inset-0" aria-hidden="true" />
+        <motion.div
+          className="intro-loader__panel intro-loader__panel--left absolute inset-y-0 left-0 w-1/2"
+          initial={{ scaleX: 1 }}
+          animate={{ scaleX: 0 }}
+          transition={{ delay: 0.48, duration: 0.72, ease: [0.76, 0, 0.24, 1] }}
+          aria-hidden="true"
+        />
+        <motion.div
+          className="intro-loader__panel intro-loader__panel--right absolute inset-y-0 right-0 w-1/2"
+          initial={{ scaleX: 1 }}
+          animate={{ scaleX: 0 }}
+          transition={{ delay: 0.48, duration: 0.72, ease: [0.76, 0, 0.24, 1] }}
+          aria-hidden="true"
+        />
+        <div className="relative z-10 flex min-h-full items-center justify-center px-6">
+          <motion.div
+            className="flex flex-col items-center text-center"
+            initial={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 0, y: -10 }}
+            transition={{ delay: 0.36, duration: 0.35, ease: 'easeIn' }}
+          >
+            <div className="flex h-14 w-14 items-center justify-center border border-[#6dd4f2]/50 bg-[#172534] text-[#f4f2ec]">
+              <span className="font-mono text-sm tracking-[-.08em]">R/G</span>
+            </div>
+            <p className="mono mt-5 text-[10px] uppercase tracking-[.22em] text-[#d7f4fb]">R G Electronics</p>
+            <p className="mt-3 text-xs text-[#a4c6cc]">Systems. Specified.</p>
+          </motion.div>
+        </div>
+        <motion.div
+          className="absolute left-1/2 top-1/2 z-20 h-28 w-px origin-top -translate-x-1/2 -translate-y-1/2 bg-[#d7f4fb]"
+          initial={{ scaleY: 0, opacity: 0 }}
+          animate={{ scaleY: 1, opacity: [0, 1, 1, 0] }}
+          transition={{ delay: 0.08, duration: 1.02, times: [0, 0.2, 0.68, 1], ease: 'easeInOut' }}
+          aria-hidden="true"
+        />
+        <div className="absolute bottom-7 left-6 right-6 z-20 flex items-center justify-between sm:bottom-9 sm:left-10 sm:right-10">
+          <motion.span
+            className="mono text-[9px] uppercase tracking-[.16em] text-[#b7dbe2]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.14, duration: 0.25 }}
+          >
+            New Delhi · India
+          </motion.span>
+          <motion.span
+            className="mono text-[9px] uppercase tracking-[.16em] text-[#b7dbe2]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.24, duration: 0.25 }}
+          >
+            Loading systems
+          </motion.span>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 function Logo() {
   return (
     <Link href="/" className="flex items-center gap-3" aria-label="R G Electronics home">
@@ -418,7 +509,7 @@ function Router() {
 }
 
 function App() {
-  return <TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider>;
+  return <TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><SiteIntro /><Toaster /></TooltipProvider>;
 }
 
 export default App;
