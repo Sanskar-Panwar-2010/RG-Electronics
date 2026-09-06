@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Award, ArrowDownRight, ArrowRight, BadgeCheck, Check, CircleAlert, Globe2, Menu, Phone, Search, Users, X } from 'lucide-react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-
-const queryClient = new QueryClient();
 
 type Product = {
   slug: string;
@@ -79,7 +76,7 @@ const products: Product[] = [
   },
 ];
 
-const categories = ['All systems', 'CCTV & surveillance', 'Fire alarm systems', 'Access control', 'EPABX & IP PBX', 'Video conferencing', 'Surveillance', 'Perimeter security', 'Fire & life safety', 'Communications', 'Access & automation', 'Traffic control', 'Screening'];
+const categories = ['All systems', 'CCTV & surveillance', 'Fire alarm systems', 'Access control', 'EPABX & IP PBX', 'Video conferencing', 'Perimeter security', 'Fire & life safety', 'Communications', 'Access & automation', 'Traffic control', 'Screening'];
 
 const stats = [
   { value: '12+', label: 'Years experience', icon: Award },
@@ -89,7 +86,7 @@ const stats = [
 ];
 
 const services = [
-  { name: 'IP CCTV Surveillance System', category: 'Surveillance', description: 'Networked visibility for entrances, perimeters, corridors and critical spaces.', image: '/images/camera-detail.png' },
+  { name: 'IP CCTV Surveillance System', category: 'CCTV & surveillance', description: 'Networked visibility for entrances, perimeters, corridors and critical spaces.', image: '/images/camera-detail.png' },
   { name: 'Under Vehicle Surveillance System (UVSS)', category: 'Perimeter security', description: 'A clear underside view for controlled vehicle movement and site screening.', image: '/images/hero-control-room.png' },
   { name: 'Intelligent Fire Alarm System', category: 'Fire & life safety', description: 'Addressable detection, zoning and event clarity when every second matters.', image: '/images/hero-control-room.png' },
   { name: 'Video Conferencing System', category: 'Communications', description: 'Rooms with clear audio, intelligent framing and controls people can use.', image: '/images/hero-control-room.png' },
@@ -118,7 +115,55 @@ const serviceProducts: Product[] = services.map((service, index) => ({
   detail: `${service.description} We shape the specification around the site, coordinate the installation, and leave the operating team with a clear handover and a local number to call.`,
 }));
 
-const catalogueProducts = [...products, ...serviceProducts];
+const SERVICE_CATALOGUE_STORAGE_KEY = 'rg-electronics-service-catalogue-v1';
+
+function isStoredProduct(value: unknown): value is Product {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Partial<Product>;
+  return typeof item.slug === 'string'
+    && typeof item.name === 'string'
+    && typeof item.category === 'string'
+    && typeof item.eyebrow === 'string'
+    && typeof item.description === 'string'
+    && typeof item.image === 'string'
+    && (item.tone === 'light' || item.tone === 'dark')
+    && Array.isArray(item.specs)
+    && item.specs.every((spec) => typeof spec === 'string')
+    && typeof item.detail === 'string';
+}
+
+function useCatalogueProducts() {
+  const [storedServices, setStoredServices] = useState<Product[]>(serviceProducts);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(SERVICE_CATALOGUE_STORAGE_KEY);
+      if (!raw) {
+        window.localStorage.setItem(SERVICE_CATALOGUE_STORAGE_KEY, JSON.stringify(serviceProducts));
+        return;
+      }
+
+      const parsed: unknown = JSON.parse(raw);
+      if (!Array.isArray(parsed) || !parsed.every(isStoredProduct)) {
+        window.localStorage.setItem(SERVICE_CATALOGUE_STORAGE_KEY, JSON.stringify(serviceProducts));
+        return;
+      }
+
+      const storedBySlug = new Map(parsed.map((service) => [service.slug, service]));
+      const merged = serviceProducts.map((service) => ({
+        ...service,
+        ...(storedBySlug.get(service.slug) ?? {}),
+        category: service.category,
+      }));
+      setStoredServices(merged);
+      window.localStorage.setItem(SERVICE_CATALOGUE_STORAGE_KEY, JSON.stringify(merged));
+    } catch {
+      setStoredServices(serviceProducts);
+    }
+  }, []);
+
+  return [...products, ...storedServices];
+}
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -211,13 +256,15 @@ function StatsStrip() {
 }
 
 function ServicesGrid() {
+  const catalogueProducts = useCatalogueProducts();
+  const serviceItems = catalogueProducts.filter((product) => product.eyebrow.startsWith('SERVICE /'));
   return <section className="bg-[#f8f7f3] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
     <div className="mx-auto max-w-[1200px]">
       <Reveal><SectionLabel>Main services</SectionLabel><div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end"><h2 className="display max-w-2xl text-4xl font-extrabold leading-[1.03] text-[#172534] sm:text-6xl">The systems that make a site feel looked after.</h2><ArrowLink href="/products">See all systems</ArrowLink></div></Reveal>
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((service, index) => <Reveal key={service.name} delay={(index % 3) * .05}><Link href="/contact" className="group block overflow-hidden border border-[#d7d4ca] bg-[#f4f2ec] transition-colors hover:border-[#007cae]">
-          <div className="relative h-36 overflow-hidden bg-[#172534]"><img src={service.image} alt="" className="h-full w-full object-cover opacity-55 transition-transform duration-700 group-hover:scale-[1.05]" /><div className="absolute inset-0 bg-[#172534]/35" /><div className="absolute inset-x-5 bottom-4 flex items-center justify-between"><span className="mono text-[10px] uppercase tracking-[.14em] text-[#b9c5c5]">{String(index + 1).padStart(2, '0')} / {service.category}</span><ArrowUpRight /></div></div>
-          <div className="p-5"><h3 className="display text-xl font-extrabold leading-tight text-[#172534]">{service.name}</h3><p className="mt-3 text-sm leading-6 text-[#65747a]">{service.description}</p><span className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#0066cc]">Discuss this service <ArrowRight size={14} /></span></div>
+        {serviceItems.map((service, index) => <Reveal key={service.slug} delay={(index % 3) * .05}><Link href={`/products/${service.slug}`} className="group block overflow-hidden border border-[#d7d4ca] bg-[#f4f2ec] transition-colors hover:border-[#007cae]">
+          <div className="relative h-36 overflow-hidden bg-[#172534]"><img src={service.image} alt="" className="h-full w-full object-cover opacity-55 transition-transform duration-700 group-hover:scale-[1.05]" /><div className="absolute inset-0 bg-[#172534]/35" /><div className="absolute inset-x-5 bottom-4 flex items-center justify-between"><span className="mono text-[10px] uppercase tracking-[.14em] text-[#b9c5c5]">{service.eyebrow} / {service.category}</span><ArrowUpRight /></div></div>
+          <div className="p-5"><h3 className="display text-xl font-extrabold leading-tight text-[#172534]">{service.name}</h3><p className="mt-3 text-sm leading-6 text-[#65747a]">{service.description}</p><span className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#0066cc]">View service <ArrowRight size={14} /></span></div>
         </Link></Reveal>)}
       </div>
     </div>
@@ -284,7 +331,8 @@ function About() {
 function Products() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All systems');
-  const filtered = useMemo(() => catalogueProducts.filter((p) => (category === 'All systems' || p.category === category) && `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(query.toLowerCase())), [category, query]);
+  const catalogueProducts = useCatalogueProducts();
+  const filtered = useMemo(() => catalogueProducts.filter((p) => (category === 'All systems' || p.category === category) && `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(query.toLowerCase())), [catalogueProducts, category, query]);
   return <PageShell><main id="main-content">
      <section className="bg-[#172534] px-5 py-20 text-[#f4f2ec] sm:px-8 lg:px-12 lg:py-28"><div className="mx-auto max-w-[1200px]"><SectionLabel light>Systems catalogue</SectionLabel><h1 className="display max-w-4xl text-5xl font-extrabold leading-[.98] sm:text-7xl">The right layer<br /><span className="text-[#2997ff]">for the right place.</span></h1><p className="mt-8 max-w-xl text-lg leading-8 text-[#b9c5c5]">Browse the systems we specify, supply, install and support. Every product is a starting point for a site conversation.</p></div></section>
     <section className="bg-[#f4f2ec] px-5 py-14 sm:px-8 lg:px-12 lg:py-20"><div className="mx-auto max-w-[1200px]">
@@ -302,6 +350,7 @@ function ProductCard({ product }: { product: Product }) {
 
 function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const catalogueProducts = useCatalogueProducts();
   const product = catalogueProducts.find((p) => p.slug === slug);
   if (!product) return <PageShell><div className="px-5 py-32 text-center"><h1 className="display text-5xl font-extrabold text-[#172534]">System not found.</h1><Link href="/products" className="mt-6 inline-block text-[#007cae]">Back to catalogue</Link></div></PageShell>;
   return <PageShell><main id="main-content">
@@ -369,7 +418,7 @@ function Router() {
 }
 
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+  return <TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider>;
 }
 
 export default App;
