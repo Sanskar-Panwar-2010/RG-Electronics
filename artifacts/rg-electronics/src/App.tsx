@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowDownRight, ArrowRight, Check, CircleAlert, Menu, Phone, Search, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Award, ArrowDownRight, ArrowRight, BadgeCheck, Check, CircleAlert, Globe2, Menu, Phone, Search, Users, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -80,6 +81,43 @@ const products: Product[] = [
 
 const categories = ['All systems', 'CCTV & surveillance', 'Fire alarm systems', 'Access control', 'EPABX & IP PBX', 'Video conferencing'];
 
+const stats = [
+  { value: '12+', label: 'Years experience', icon: Award },
+  { value: '100+', label: 'Projects completed', icon: BadgeCheck },
+  { value: '50+', label: 'Team members', icon: Users },
+  { value: '21+', label: 'Cities covered', icon: Globe2 },
+];
+
+const services = [
+  { name: 'IP CCTV Surveillance System', category: 'Surveillance', description: 'Networked visibility for entrances, perimeters, corridors and critical spaces.', image: '/images/camera-detail.png' },
+  { name: 'Under Vehicle Surveillance System (UVSS)', category: 'Perimeter security', description: 'A clear underside view for controlled vehicle movement and site screening.', image: '/images/hero-control-room.png' },
+  { name: 'Intelligent Fire Alarm System', category: 'Fire & life safety', description: 'Addressable detection, zoning and event clarity when every second matters.', image: '/images/hero-control-room.png' },
+  { name: 'Video Conferencing System', category: 'Communications', description: 'Rooms with clear audio, intelligent framing and controls people can use.', image: '/images/hero-control-room.png' },
+  { name: 'EPABX & IP PBX System', category: 'Communications', description: 'Reliable voice infrastructure for teams, reception desks and distributed sites.', image: '/images/access-control.png' },
+  { name: 'Audio Video System', category: 'Communications', description: 'Integrated sound and display systems for rooms that need to communicate.', image: '/images/hero-control-room.png' },
+  { name: 'Domestic Automation & Access Control', category: 'Access & automation', description: 'Thoughtful entry, intercom and automation layers for homes and buildings.', image: '/images/access-control.png' },
+  { name: 'Room Barriers', category: 'Traffic control', description: 'Vehicle access points that keep movement orderly without slowing the site down.', image: '/images/hero-control-room.png' },
+  { name: 'Tyre Killer / Spike Barriers', category: 'Perimeter security', description: 'Physical control for high-risk approaches, checkpoints and restricted lanes.', image: '/images/access-control.png' },
+  { name: 'Hydraulic Bollards', category: 'Traffic control', description: 'Robust rising protection for entries where the perimeter needs authority.', image: '/images/hero-control-room.png' },
+  { name: 'Road Blockers', category: 'Perimeter security', description: 'Heavy-duty vehicle denial for sensitive or high-value sites.', image: '/images/access-control.png' },
+  { name: 'Handheld Metal Detectors (HHMD)', category: 'Screening', description: 'Fast, dependable secondary screening for people and controlled access.', image: '/images/hero-control-room.png' },
+  { name: 'Door Frame Metal Detectors (DFMD)', category: 'Screening', description: 'A discreet first layer for entrances, venues and secure facilities.', image: '/images/access-control.png' },
+  { name: 'Baggage Scanners', category: 'Screening', description: 'Consistent inspection for bags, parcels and the flow of people through a site.', image: '/images/hero-control-room.png' },
+  { name: 'Swing and Slide Gates', category: 'Access & automation', description: 'Measured, durable gate systems that complete the site’s access logic.', image: '/images/access-control.png' },
+];
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return reduced;
+}
+
 function Logo() {
   return (
     <Link href="/" className="flex items-center gap-3" aria-label="R G Electronics home">
@@ -97,6 +135,7 @@ function Logo() {
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [location] = useLocation();
+  const reduceMotion = usePrefersReducedMotion();
   const nav = [
     { href: '/products', label: 'Systems' },
     { href: '/about', label: 'Our approach' },
@@ -104,7 +143,7 @@ function Header() {
   ];
   useEffect(() => setMenuOpen(false), [location]);
   return (
-    <header className="relative z-50 border-b border-[#dcd9d0] bg-[#f4f2ec]">
+    <motion.header initial={reduceMotion ? false : { y: -12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: reduceMotion ? 0 : .55, ease: [.22, 1, .36, 1] }} className="relative z-50 border-b border-[#dcd9d0] bg-[#f4f2ec]">
       <div className="mx-auto flex h-[74px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
         <Logo />
         <nav className="hidden items-center gap-8 md:flex" aria-label="Main navigation">
@@ -116,13 +155,15 @@ function Header() {
           <button className="inline-flex h-10 w-10 items-center justify-center border border-[#cfcac0] text-[#172534] md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-controls="mobile-navigation" aria-expanded={menuOpen}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
       </div>
-      {menuOpen && <div id="mobile-navigation" className="absolute left-0 right-0 top-[74px] border-b border-[#dcd9d0] bg-[#f4f2ec] px-5 py-5 md:hidden">
-        <nav className="flex flex-col" aria-label="Mobile navigation">
-          {nav.map((item) => <Link key={item.href} href={item.href} className="border-b border-[#dcd9d0] py-4 text-sm font-semibold text-[#172534]">{item.label}</Link>)}
-          <a href="tel:+911145670760" className="flex items-center gap-2 py-4 text-sm font-semibold text-[#007cae]"><Phone size={15} /> Call New Delhi office</a>
-        </nav>
-      </div>}
-    </header>
+      <AnimatePresence initial={false}>
+        {menuOpen && <motion.div id="mobile-navigation" initial={reduceMotion ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={reduceMotion ? undefined : { opacity: 0, height: 0 }} transition={{ duration: reduceMotion ? 0 : .25, ease: [.22, 1, .36, 1] }} className="absolute left-0 right-0 top-[74px] overflow-hidden border-b border-[#dcd9d0] bg-[#f4f2ec] px-5 py-5 md:hidden">
+          <nav className="flex flex-col" aria-label="Mobile navigation">
+            {nav.map((item, index) => <motion.div key={item.href} initial={reduceMotion ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: reduceMotion ? 0 : index * .04 }}><Link href={item.href} className="block border-b border-[#dcd9d0] py-4 text-sm font-semibold text-[#172534]">{item.label}</Link></motion.div>)}
+            <a href="tel:+911145670760" className="flex items-center gap-2 py-4 text-sm font-semibold text-[#007cae]"><Phone size={15} /> Call New Delhi office</a>
+          </nav>
+        </motion.div>}
+      </AnimatePresence>
+    </motion.header>
   );
 }
 
@@ -140,6 +181,33 @@ function Footer() {
 
 function PageShell({ children }: { children: ReactNode }) {
   return <><a href="#main-content" className="skip-link">Skip to content</a><Header />{children}<Footer /></>;
+}
+
+function Reveal({ children, delay = 0, className = '' }: { children: ReactNode; delay?: number; className?: string }) {
+  const reduceMotion = usePrefersReducedMotion();
+  return <motion.div initial={reduceMotion ? false : { opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .16 }} transition={{ duration: reduceMotion ? 0 : .65, delay: reduceMotion ? 0 : delay, ease: [.22, 1, .36, 1] }} className={className}>{children}</motion.div>;
+}
+
+function StatsStrip() {
+  return <section className="bg-[#f4f2ec] px-5 py-10 sm:px-8 lg:px-12">
+    <div className="mx-auto grid max-w-[1200px] grid-cols-2 border-y border-[#d7d4ca] lg:grid-cols-4">
+      {stats.map((stat) => { const Icon = stat.icon; return <div key={stat.label} className="border-b border-[#d7d4ca] px-5 py-7 last:border-b-0 sm:px-7 lg:border-b-0 lg:border-r lg:last:border-r-0"><Icon size={19} strokeWidth={1.8} className="text-[#007cae]" /><p className="display mt-8 text-3xl font-extrabold tracking-[-.06em] text-[#172534] sm:text-4xl">{stat.value}</p><p className="mt-2 text-xs text-[#65747a]">{stat.label}</p></div>; })}
+    </div>
+  </section>;
+}
+
+function ServicesGrid() {
+  return <section className="bg-[#f8f7f3] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+    <div className="mx-auto max-w-[1200px]">
+      <Reveal><SectionLabel>Main services</SectionLabel><div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end"><h2 className="display max-w-2xl text-4xl font-extrabold leading-[1.03] text-[#172534] sm:text-6xl">The systems that make a site feel looked after.</h2><ArrowLink href="/products">See all systems</ArrowLink></div></Reveal>
+      <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((service, index) => <Reveal key={service.name} delay={(index % 3) * .05}><Link href="/contact" className="group block overflow-hidden border border-[#d7d4ca] bg-[#f4f2ec] transition-colors hover:border-[#007cae]">
+          <div className="relative h-36 overflow-hidden bg-[#172534]"><img src={service.image} alt="" className="h-full w-full object-cover opacity-55 transition-transform duration-700 group-hover:scale-[1.05]" /><div className="absolute inset-0 bg-[#172534]/35" /><div className="absolute inset-x-5 bottom-4 flex items-center justify-between"><span className="mono text-[10px] uppercase tracking-[.14em] text-[#b9c5c5]">{String(index + 1).padStart(2, '0')} / {service.category}</span><ArrowUpRight /></div></div>
+          <div className="p-5"><h3 className="display text-xl font-extrabold leading-tight text-[#172534]">{service.name}</h3><p className="mt-3 text-sm leading-6 text-[#65747a]">{service.description}</p><span className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#0066cc]">Discuss this service <ArrowRight size={14} /></span></div>
+        </Link></Reveal>)}
+      </div>
+    </div>
+  </section>;
 }
 
 function SectionLabel({ children, light = false }: { children: ReactNode; light?: boolean }) {
@@ -163,6 +231,7 @@ function Home() {
           </div>
         </div>
       </section>
+      <StatsStrip />
 
       <section className="bg-[#f4f2ec] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
         <div className="mx-auto grid max-w-[1200px] gap-14 lg:grid-cols-[.9fr_1.4fr] lg:items-start">
@@ -179,6 +248,7 @@ function Home() {
           </div>
         </div>
       </section>
+      <ServicesGrid />
 
       <section className="bg-[#172534] px-5 py-20 text-[#f4f2ec] sm:px-8 lg:px-12 lg:py-28"><div className="mx-auto grid max-w-[1200px] gap-14 lg:grid-cols-[1fr_1.1fr] lg:items-end"><div><SectionLabel light>Good to know</SectionLabel><h2 className="display max-w-lg text-4xl font-extrabold leading-[1.04] sm:text-6xl">The person on the other end is part of the system.</h2></div><div><p className="text-lg leading-8 text-[#b9c5c5]">R G Electronics has been working with builders, facility teams, schools, hospitals and offices across Delhi NCR for more than two decades. Our work is technical. Our approach is human.</p><ArrowLink href="/about" light>How we work</ArrowLink></div></div></section>
       <ContactBand />
@@ -266,6 +336,7 @@ function Field({ id, name, autoComplete, type = 'text', label, value, onChange, 
 
 function Router() {
   const [location] = useLocation();
+  const reduceMotion = usePrefersReducedMotion();
   useEffect(() => {
     const path = location.split('?')[0];
     const title = path === '/' ? 'R G Electronics — Security & communications infrastructure' : path === '/about' ? 'Our approach — R G Electronics' : path === '/products' ? 'Systems catalogue — R G Electronics' : path === '/contact' ? 'Contact New Delhi — R G Electronics' : 'System detail — R G Electronics';
@@ -277,8 +348,10 @@ function Router() {
       document.head.appendChild(description);
     }
     description.setAttribute('content', 'R G Electronics specifies, installs and supports security and communications infrastructure for buildings across Delhi NCR.');
+    window.history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
   }, [location]);
-  return <ErrorBoundary resetKey={location}><Switch><Route path="/" component={Home} /><Route path="/about" component={About} /><Route path="/products" component={Products} /><Route path="/products/:slug" component={ProductDetail} /><Route path="/contact" component={Contact} /><Route><PageShell><div className="px-5 py-32 text-center"><h1 className="display text-5xl font-extrabold text-[#172534]">Page not found.</h1><Link href="/" className="mt-6 inline-block text-[#007cae]">Return home</Link></div></PageShell></Route></Switch></ErrorBoundary>;
+  return <ErrorBoundary resetKey={location}><AnimatePresence mode="wait" initial={false}><motion.div key={location} initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: reduceMotion ? 0 : .35, ease: [.22, 1, .36, 1] }}><Switch><Route path="/" component={Home} /><Route path="/about" component={About} /><Route path="/products" component={Products} /><Route path="/products/:slug" component={ProductDetail} /><Route path="/contact" component={Contact} /><Route><PageShell><main id="main-content" className="px-5 py-32 text-center"><h1 className="display text-5xl font-extrabold text-[#172534]">Page not found.</h1><Link href="/" className="mt-6 inline-block text-[#007cae]">Return home</Link></main></PageShell></Route></Switch></motion.div></AnimatePresence></ErrorBoundary>;
 }
 
 function App() {
