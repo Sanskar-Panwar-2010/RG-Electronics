@@ -79,7 +79,7 @@ const products: Product[] = [
   },
 ];
 
-const categories = ['All systems', 'CCTV & surveillance', 'Fire alarm systems', 'Access control', 'EPABX & IP PBX', 'Video conferencing'];
+const categories = ['All systems', 'CCTV & surveillance', 'Fire alarm systems', 'Access control', 'EPABX & IP PBX', 'Video conferencing', 'Surveillance', 'Perimeter security', 'Fire & life safety', 'Communications', 'Access & automation', 'Traffic control', 'Screening'];
 
 const stats = [
   { value: '12+', label: 'Years experience', icon: Award },
@@ -105,6 +105,20 @@ const services = [
   { name: 'Baggage Scanners', category: 'Screening', description: 'Consistent inspection for bags, parcels and the flow of people through a site.', image: '/images/hero-control-room.png' },
   { name: 'Swing and Slide Gates', category: 'Access & automation', description: 'Measured, durable gate systems that complete the site’s access logic.', image: '/images/access-control.png' },
 ];
+
+const serviceProducts: Product[] = services.map((service, index) => ({
+  slug: service.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+  name: service.name,
+  category: service.category,
+  eyebrow: `SERVICE / ${String(index + 1).padStart(2, '0')}`,
+  description: service.description,
+  image: service.image,
+  tone: index % 2 === 0 ? 'light' : 'dark',
+  specs: ['Site-specific equipment schedule', 'Installation and commissioning', 'Handover and ongoing support'],
+  detail: `${service.description} We shape the specification around the site, coordinate the installation, and leave the operating team with a clear handover and a local number to call.`,
+}));
+
+const catalogueProducts = [...products, ...serviceProducts];
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -270,7 +284,7 @@ function About() {
 function Products() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All systems');
-  const filtered = useMemo(() => products.filter((p) => (category === 'All systems' || p.category === category) && `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(query.toLowerCase())), [category, query]);
+  const filtered = useMemo(() => catalogueProducts.filter((p) => (category === 'All systems' || p.category === category) && `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(query.toLowerCase())), [category, query]);
   return <PageShell><main id="main-content">
      <section className="bg-[#172534] px-5 py-20 text-[#f4f2ec] sm:px-8 lg:px-12 lg:py-28"><div className="mx-auto max-w-[1200px]"><SectionLabel light>Systems catalogue</SectionLabel><h1 className="display max-w-4xl text-5xl font-extrabold leading-[.98] sm:text-7xl">The right layer<br /><span className="text-[#2997ff]">for the right place.</span></h1><p className="mt-8 max-w-xl text-lg leading-8 text-[#b9c5c5]">Browse the systems we specify, supply, install and support. Every product is a starting point for a site conversation.</p></div></section>
     <section className="bg-[#f4f2ec] px-5 py-14 sm:px-8 lg:px-12 lg:py-20"><div className="mx-auto max-w-[1200px]">
@@ -288,7 +302,7 @@ function ProductCard({ product }: { product: Product }) {
 
 function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const product = products.find((p) => p.slug === slug);
+  const product = catalogueProducts.find((p) => p.slug === slug);
   if (!product) return <PageShell><div className="px-5 py-32 text-center"><h1 className="display text-5xl font-extrabold text-[#172534]">System not found.</h1><Link href="/products" className="mt-6 inline-block text-[#007cae]">Back to catalogue</Link></div></PageShell>;
   return <PageShell><main id="main-content">
     <section className={`grid min-h-[620px] lg:grid-cols-2 ${product.tone === 'dark' ? 'bg-[#172534] text-[#f4f2ec]' : 'bg-[#e6e3db] text-[#172534]'}`}><div className="flex flex-col justify-center px-5 py-16 sm:px-12 lg:px-20"><SectionLabel light={product.tone === 'dark'}>{product.eyebrow}</SectionLabel><h1 className="display max-w-xl text-5xl font-extrabold leading-[.98] sm:text-7xl">{product.name}</h1><p className={`mt-8 max-w-lg text-lg leading-8 ${product.tone === 'dark' ? 'text-[#bdc9c8]' : 'text-[#536168]'}`}>{product.detail}</p><Link href="/contact" className="mt-9 inline-flex w-fit items-center bg-[#007cae] px-5 py-3 text-sm font-bold text-white">Ask about this system <ArrowRight size={15} className="ml-3" /></Link></div><div className="relative min-h-[420px] overflow-hidden"><img src={product.image} alt={product.name} className="h-full w-full object-cover" /></div></section>
