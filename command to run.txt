@@ -1,0 +1,1 @@
+MSYS_NO_PATHCONV=1 PORT=3000 BASE_PATH=/ pnpm --filter @workspace/rg-electronics run dev

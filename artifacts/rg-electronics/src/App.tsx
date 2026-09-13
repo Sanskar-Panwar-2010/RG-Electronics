@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Award, ArrowDownRight, ArrowRight, BadgeCheck, Check, CircleAlert, Globe2, Menu, Phone, Search, Users, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
+import { Award, ArrowDownRight, ArrowRight, ArrowUpRight, BadgeCheck, Check, CircleAlert, Globe2, Menu, Phone, Search, Users, X } from 'lucide-react';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -180,6 +180,7 @@ function usePrefersReducedMotion() {
 function SiteIntro() {
   const reduceMotion = usePrefersReducedMotion();
   const [visible, setVisible] = useState(true);
+  const [interactive, setInteractive] = useState(false);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -189,11 +190,19 @@ function SiteIntro() {
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const timer = window.setTimeout(() => setVisible(false), 1450);
+
+    // Unlock scrolling and enable interaction right as the line finishes extending and boxes start splitting
+    const interactiveTimer = window.setTimeout(() => {
+      document.body.style.overflow = '';
+      setInteractive(true);
+    }, 1400);
+
+    const timer = window.setTimeout(() => setVisible(false), 2600);
 
     return () => {
+      window.clearTimeout(interactiveTimer);
       window.clearTimeout(timer);
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousOverflow === 'hidden' ? '' : previousOverflow;
     };
   }, [reduceMotion]);
 
@@ -202,67 +211,38 @@ function SiteIntro() {
   return (
     <AnimatePresence>
       <motion.div
-        className="intro-loader fixed inset-0 z-[100] overflow-hidden"
+        className={`intro-loader fixed inset-0 z-[100] overflow-hidden ${interactive ? 'pointer-events-none' : ''
+          }`}
         role="status"
         aria-label="Loading R G Electronics"
         initial={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.2, ease: 'easeOut' }}
+        transition={{ duration: reduceMotion ? 0 : 0.3, ease: 'easeOut' }}
       >
-        <div className="intro-loader__grid absolute inset-0" aria-hidden="true" />
+        {/* Left static blue box */}
         <motion.div
           className="intro-loader__panel intro-loader__panel--left absolute inset-y-0 left-0 w-1/2"
           initial={{ scaleX: 1 }}
           animate={{ scaleX: 0 }}
-          transition={{ delay: 0.48, duration: 0.72, ease: [0.76, 0, 0.24, 1] }}
+          transition={{ delay: 1.4, duration: 1.1, ease: [0.76, 0, 0.24, 1] }}
           aria-hidden="true"
         />
+        {/* Right static blue box */}
         <motion.div
           className="intro-loader__panel intro-loader__panel--right absolute inset-y-0 right-0 w-1/2"
           initial={{ scaleX: 1 }}
           animate={{ scaleX: 0 }}
-          transition={{ delay: 0.48, duration: 0.72, ease: [0.76, 0, 0.24, 1] }}
+          transition={{ delay: 1.4, duration: 1.1, ease: [0.76, 0, 0.24, 1] }}
           aria-hidden="true"
         />
-        <div className="relative z-10 flex min-h-full items-center justify-center px-6">
-          <motion.div
-            className="flex flex-col items-center text-center"
-            initial={{ opacity: 1, y: 0 }}
-            animate={{ opacity: 0, y: -10 }}
-            transition={{ delay: 0.36, duration: 0.35, ease: 'easeIn' }}
-          >
-            <div className="flex h-14 w-14 items-center justify-center border border-[#6dd4f2]/50 bg-[#172534] text-[#f4f2ec]">
-              <span className="font-mono text-sm tracking-[-.08em]">R/G</span>
-            </div>
-            <p className="mono mt-5 text-[10px] uppercase tracking-[.22em] text-[#d7f4fb]">R G Electronics</p>
-            <p className="mt-3 text-xs text-[#a4c6cc]">Systems. Specified.</p>
-          </motion.div>
-        </div>
+        {/* Prominent, crisp vertical center line extending from center to top and bottom */}
         <motion.div
-          className="absolute left-1/2 top-1/2 z-20 h-28 w-px origin-top -translate-x-1/2 -translate-y-1/2 bg-[#d7f4fb]"
+          className="absolute inset-y-0 left-1/2 z-20 w-[3px] -translate-x-1/2 bg-white shadow-[0_0_14px_rgba(255,255,255,0.7)] origin-center"
           initial={{ scaleY: 0, opacity: 0 }}
           animate={{ scaleY: 1, opacity: [0, 1, 1, 0] }}
-          transition={{ delay: 0.08, duration: 1.02, times: [0, 0.2, 0.68, 1], ease: 'easeInOut' }}
+          transition={{ delay: 0.35, duration: 1.0, times: [0, 0.1, 0.9, 1], ease: [0.22, 1, 0.36, 1] }}
           aria-hidden="true"
         />
-        <div className="absolute bottom-7 left-6 right-6 z-20 flex items-center justify-between sm:bottom-9 sm:left-10 sm:right-10">
-          <motion.span
-            className="mono text-[9px] uppercase tracking-[.16em] text-[#b7dbe2]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.14, duration: 0.25 }}
-          >
-            New Delhi · India
-          </motion.span>
-          <motion.span
-            className="mono text-[9px] uppercase tracking-[.16em] text-[#b7dbe2]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.24, duration: 0.25 }}
-          >
-            Loading systems
-          </motion.span>
-        </div>
       </motion.div>
     </AnimatePresence>
   );
@@ -270,13 +250,19 @@ function SiteIntro() {
 
 function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-3" aria-label="R G Electronics home">
-      <span className="flex h-9 w-9 items-center justify-center bg-[#172534] text-[#f4f2ec]">
-        <span className="font-mono text-[12px] font-medium tracking-[-.08em]">R/G</span>
-      </span>
-      <span className="leading-none">
-        <span className="block text-[13px] font-extrabold tracking-[-.04em] text-[#172534]">R G ELECTRONICS</span>
-        <span className="mt-1 block font-mono text-[8px] uppercase tracking-[.18em] text-[#63727b]">Systems. Specified.</span>
+    <Link href="/" className="flex items-center gap-3 group" aria-label="R G Electronics home">
+      <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-[#0f172a] shadow-md transition-transform group-hover:scale-105">
+        <svg viewBox="0 0 32 32" className="h-5 w-5" fill="none">
+          <circle cx="16" cy="9.5" r="5" fill="#f43f5e" opacity="0.9" />
+          <circle cx="22.5" cy="13.2" r="5" fill="#fb923c" opacity="0.9" />
+          <circle cx="22.5" cy="20.8" r="5" fill="#facc15" opacity="0.9" />
+          <circle cx="16" cy="24.5" r="5" fill="#4ade80" opacity="0.9" />
+          <circle cx="9.5" cy="20.8" r="5" fill="#38bdf8" opacity="0.9" />
+          <circle cx="9.5" cy="13.2" r="5" fill="#a855f7" opacity="0.9" />
+        </svg>
+      </div>
+      <span className="text-[14px] font-extrabold tracking-tight text-white">
+        R G Electronics
       </span>
     </Link>
   );
@@ -286,32 +272,115 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [location] = useLocation();
   const reduceMotion = usePrefersReducedMotion();
+
   const nav = [
-    { href: '/products', label: 'Systems' },
-    { href: '/about', label: 'Our approach' },
-    { href: '/contact', label: 'Contact' },
+    { href: '/', label: 'Home' },
+    { href: '/about', label: 'Our Approach' },
+    { href: '/products', label: 'Services' },
   ];
+
   useEffect(() => setMenuOpen(false), [location]);
+
   return (
-    <motion.header initial={reduceMotion ? false : { y: -12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: reduceMotion ? 0 : .55, ease: [.22, 1, .36, 1] }} className="relative z-50 border-b border-[#dcd9d0] bg-[#f4f2ec]">
-      <div className="mx-auto flex h-[74px] max-w-[1440px] items-center justify-between px-5 sm:px-8 lg:px-12">
-        <Logo />
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Main navigation">
-          {nav.map((item) => <Link key={item.href} href={item.href} className={`text-[12px] font-semibold transition-colors hover:text-[#007cae] ${location === item.href ? 'text-[#007cae]' : 'text-[#394751]'}`}>{item.label}</Link>)}
+    <motion.header
+      initial={reduceMotion ? false : { y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: reduceMotion ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#0f172a]/60 backdrop-blur-xl backdrop-saturate-150 transition-all duration-300"
+    >
+      {/* Regular full-width navbar container */}
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
+        <div className="flex items-center">
+          <Logo />
+          {/* Subtle separator */}
+          <div className="ml-5 hidden h-5 w-px bg-white/20 sm:block" aria-hidden="true" />
+        </div>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
+          {nav.map((item) => {
+            const isActive = location === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative rounded-full px-5 py-2 text-[13px] font-semibold transition-all ${isActive
+                  ? 'bg-white/15 text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
+                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+          <Link
+            href="/contact"
+            className={`ml-2 rounded-full border px-5 py-2 text-[13px] font-semibold transition-all ${location === '/contact'
+              ? 'border-[#0091ff] bg-gradient-to-b from-[#0091ff] to-[#0070f3] text-white shadow-[0_4px_14px_rgba(0,112,243,0.35)]'
+              : 'border-white/20 bg-white/5 text-white/80 hover:border-[#0091ff] hover:bg-[#0091ff] hover:text-white hover:shadow-[0_4px_14px_rgba(0,145,255,0.35)]'
+              }`}
+          >
+            Contact Us
+          </Link>
         </nav>
-        <div className="flex items-center gap-3">
-          <a href="tel:+911145670760" className="hidden items-center gap-2 text-[12px] font-semibold text-[#394751] hover:text-[#007cae] lg:flex"><Phone size={14} strokeWidth={1.8} /> +91 11 4567 0760</a>
-          <Link href="/contact" className="hidden bg-[#007cae] px-4 py-2.5 text-[12px] font-bold text-white transition-transform hover:-translate-y-0.5 sm:inline-flex">Plan a site visit <ArrowRight size={14} className="ml-2" /></Link>
-          <button className="inline-flex h-10 w-10 items-center justify-center border border-[#cfcac0] text-[#172534] md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-controls="mobile-navigation" aria-expanded={menuOpen}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
+
+        {/* Mobile Navigation Trigger */}
+        <div className="flex items-center gap-2 md:hidden">
+          <Link
+            href="/contact"
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-all ${location === '/contact'
+              ? 'border-[#0091ff] bg-gradient-to-b from-[#0091ff] to-[#0070f3] text-white'
+              : 'border-white/20 bg-white/5 text-white/80 active:bg-[#0091ff] active:text-white'
+              }`}
+          >
+            Contact Us
+          </Link>
+          <button
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm backdrop-blur-md"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </div>
-      <AnimatePresence initial={false}>
-        {menuOpen && <motion.div id="mobile-navigation" initial={reduceMotion ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={reduceMotion ? undefined : { opacity: 0, height: 0 }} transition={{ duration: reduceMotion ? 0 : .25, ease: [.22, 1, .36, 1] }} className="absolute left-0 right-0 top-[74px] overflow-hidden border-b border-[#dcd9d0] bg-[#f4f2ec] px-5 py-5 md:hidden">
-          <nav className="flex flex-col" aria-label="Mobile navigation">
-            {nav.map((item, index) => <motion.div key={item.href} initial={reduceMotion ? false : { opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: reduceMotion ? 0 : index * .04 }}><Link href={item.href} className="block border-b border-[#dcd9d0] py-4 text-sm font-semibold text-[#172534]">{item.label}</Link></motion.div>)}
-            <a href="tel:+911145670760" className="flex items-center gap-2 py-4 text-sm font-semibold text-[#007cae]"><Phone size={15} /> Call New Delhi office</a>
-          </nav>
-        </motion.div>}
+
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            id="mobile-navigation"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="border-t border-white/10 bg-[#0f172a]/60 px-6 py-3 backdrop-blur-2xl md:hidden"
+          >
+            <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
+              {nav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${location === item.href
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <Link
+                href="/contact"
+                className={`mt-2 block rounded-xl border px-4 py-3 text-center text-sm font-semibold transition-all ${location === '/contact'
+                  ? 'border-[#0091ff] bg-[#0091ff] text-white'
+                  : 'border-white/20 bg-white/5 text-white/80 hover:border-[#0091ff] hover:bg-[#0091ff] hover:text-white'
+                  }`}
+              >
+                Contact Us
+              </Link>
+            </nav>
+          </motion.div>
+        )}
       </AnimatePresence>
     </motion.header>
   );
@@ -323,14 +392,14 @@ function Footer() {
       <div><div className="mb-6 flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center bg-[#0066cc] text-white"><span className="font-mono text-[12px] font-medium tracking-[-.08em]">R/G</span></span><span className="text-[13px] font-extrabold tracking-[-.04em]">R G ELECTRONICS</span></div><p className="max-w-xs text-sm leading-7 text-[#acb8bc]">Security and communications infrastructure, specified and supported from New Delhi.</p></div>
       <div><p className="mono mb-5 text-[10px] uppercase text-[#7e929b]">Explore</p><div className="flex flex-col gap-3 text-sm text-[#e9ebe6]"><Link href="/products">Systems catalogue</Link><Link href="/about">Our approach</Link><Link href="/contact">Start a conversation</Link></div></div>
       <div><p className="mono mb-5 text-[10px] uppercase text-[#7e929b]">Capability</p><div className="flex flex-col gap-3 text-sm text-[#e9ebe6]"><span>CCTV & surveillance</span><span>Fire & life safety</span><span>Access & communications</span></div></div>
-      <div><p className="mono mb-5 text-[10px] uppercase text-[#7e929b]">New Delhi office</p><address className="not-italic text-sm leading-7 text-[#e9ebe6]">A-18, Okhla Industrial Area<br />Phase II, New Delhi 110020<br /><a className="text-[#2997ff]" href="tel:+911145670760">+91 11 4567 0760</a><br /><a className="text-[#2997ff]" href="mailto:hello@rgelectronics.in">hello@rgelectronics.in</a></address></div>
+      <div><p className="mono mb-5 text-[10px] uppercase text-[#7e929b]">New Delhi office</p><address className="not-italic text-sm leading-7 text-[#e9ebe6]">Plot No. 5, UG Floor<br />South Ganesh Nagar, New Delhi 110092<br /><a className="text-[#2997ff]" href="tel:+919953440640">+91 99534 40640</a><br /><a className="text-[#2997ff]" href="mailto:hello@rgelectronics.in">sales@rgelectronics.co.in</a></address></div>
     </div>
-    <div className="border-t border-[#2f414b] px-5 py-5 sm:px-8 lg:px-12"><div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-2 text-[11px] text-[#7e929b] sm:flex-row"><span>© 2024 R G Electronics. Built for the long run.</span><span>Licensed installation · Testing · Commissioning</span></div></div>
+    <div className="border-t border-[#2f414b] px-5 py-5 sm:px-8 lg:px-12"><div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-2 text-[11px] text-[#7e929b] sm:flex-row"><span>© 2013 - 2026 R G Electronics. Built for the long run.</span><span>Licensed installation · Testing · Commissioning</span></div></div>
   </footer>;
 }
 
 function PageShell({ children }: { children: ReactNode }) {
-  return <><a href="#main-content" className="skip-link">Skip to content</a><Header />{children}<Footer /></>;
+  return <>{children}</>;
 }
 
 function Reveal({ children, delay = 0, className = '' }: { children: ReactNode; delay?: number; className?: string }) {
@@ -346,19 +415,61 @@ function StatsStrip() {
   </section>;
 }
 
+function ServiceCard({ service }: { service: Product }) {
+  return <article className="group flex w-[min(88vw,420px)] shrink-0 flex-col overflow-hidden border border-[#d7d4ca] bg-[#f4f2ec] transition-colors hover:border-[#007cae]">
+    <div className="relative h-52 overflow-hidden bg-[#172534]">
+      <img src={service.image} alt="" className="h-full w-full object-cover opacity-55 transition-transform duration-700 group-hover:scale-[1.05]" />
+      <div className="absolute inset-0 bg-[#172534]/35" />
+      <div className="absolute inset-x-6 bottom-5 flex items-center justify-between"><span className="mono text-[10px] uppercase tracking-[.14em] text-[#b9c5c5]">{service.eyebrow} / {service.category}</span><ArrowUpRight /></div>
+    </div>
+    <div className="flex flex-1 flex-col p-6">
+      <h3 className="display text-2xl font-extrabold leading-tight text-[#172534]">{service.name}</h3>
+      <p className="mt-3 text-base leading-7 text-[#65747a]">{service.description}</p>
+      <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm font-bold">
+        <Link href={`/products/${service.slug}`} className="inline-flex items-center gap-2 text-[#0066cc]">View service <ArrowRight size={15} /></Link>
+        <Link href={`/contact?subject=${encodeURIComponent(`I'd like to discuss ${service.name}.`)}`} className="inline-flex items-center gap-2 text-[#172534]">Contact us <ArrowUpRight size={15} /></Link>
+      </div>
+    </div>
+  </article>;
+}
+
+function ScrollingServiceRow({ services, direction }: { services: Product[]; direction: 1 | -1 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start end', 'end start'] });
+  const reduceMotion = usePrefersReducedMotion();
+  const x = useTransform(scrollYProgress, [0, 1], direction === 1 ? ['-10%', '0%'] : ['0%', '-10%']);
+  const loopedServices = [...services, ...services, ...services, ...services, ...services];
+
+  return <div ref={containerRef} className="overflow-hidden py-2">
+    <motion.div style={{ x: reduceMotion ? 0 : x }} className="flex w-max gap-5 px-5 sm:px-8 lg:px-12">
+      {loopedServices.map((service, index) => <ServiceCard key={`${service.slug}-${index}`} service={service} />)}
+    </motion.div>
+  </div>;
+}
+
+function ScrollingServiceCards({ services }: { services: Product[] }) {
+  const rows = [services.slice(0, 5), services.slice(5, 10), services.slice(10, 15)];
+  return <div className="mt-12 space-y-3">
+    <ScrollingServiceRow services={rows[0]} direction={1} />
+    <ScrollingServiceRow services={rows[1]} direction={-1} />
+    <ScrollingServiceRow services={rows[2]} direction={1} />
+  </div>;
+}
+
 function ServicesGrid() {
   const catalogueProducts = useCatalogueProducts();
   const serviceItems = catalogueProducts.filter((product) => product.eyebrow.startsWith('SERVICE /'));
-  return <section className="bg-[#f8f7f3] px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
-    <div className="mx-auto max-w-[1200px]">
-      <Reveal><SectionLabel>Main services</SectionLabel><div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end"><h2 className="display max-w-2xl text-4xl font-extrabold leading-[1.03] text-[#172534] sm:text-6xl">The systems that make a site feel looked after.</h2><ArrowLink href="/products">See all systems</ArrowLink></div></Reveal>
-      <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {serviceItems.map((service, index) => <Reveal key={service.slug} delay={(index % 3) * .05}><Link href={`/products/${service.slug}`} className="group block overflow-hidden border border-[#d7d4ca] bg-[#f4f2ec] transition-colors hover:border-[#007cae]">
-          <div className="relative h-36 overflow-hidden bg-[#172534]"><img src={service.image} alt="" className="h-full w-full object-cover opacity-55 transition-transform duration-700 group-hover:scale-[1.05]" /><div className="absolute inset-0 bg-[#172534]/35" /><div className="absolute inset-x-5 bottom-4 flex items-center justify-between"><span className="mono text-[10px] uppercase tracking-[.14em] text-[#b9c5c5]">{service.eyebrow} / {service.category}</span><ArrowUpRight /></div></div>
-          <div className="p-5"><h3 className="display text-xl font-extrabold leading-tight text-[#172534]">{service.name}</h3><p className="mt-3 text-sm leading-6 text-[#65747a]">{service.description}</p><span className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#0066cc]">View service <ArrowRight size={14} /></span></div>
-        </Link></Reveal>)}
-      </div>
+  return <section className="bg-[#f8f7f3] py-20 lg:py-28 overflow-hidden">
+    <div className="mx-auto max-w-[1200px] px-5 sm:px-8 lg:px-12">
+      <Reveal>
+        <SectionLabel>Main services</SectionLabel>
+        <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+          <h2 className="display max-w-2xl text-4xl font-extrabold leading-[1.03] text-[#172534] sm:text-6xl">The systems that make a site feel looked after.</h2>
+          <ArrowLink href="/products">See all systems</ArrowLink>
+        </div>
+      </Reveal>
     </div>
+    <ScrollingServiceCards services={serviceItems} />
   </section>;
 }
 
@@ -376,10 +487,10 @@ function Home() {
       <section className="relative min-h-[650px] overflow-hidden bg-[#172534] text-[#f4f2ec]">
         <div className="absolute inset-0"><img src="/images/hero-control-room.png" alt="R G Electronics security control room" className="h-full w-full object-cover opacity-45" /><div className="absolute inset-0 bg-[#172534]/55" /></div>
         <div className="relative mx-auto flex min-h-[650px] max-w-[1440px] flex-col justify-between px-5 py-14 sm:px-8 lg:px-12 lg:py-20">
-          <div className="flex items-start justify-between"><SectionLabel light>New Delhi · Since 1998</SectionLabel><span className="mono hidden text-[10px] uppercase tracking-[.14em] text-[#b4c1c3] sm:block">Infrastructure partner / 01</span></div>
+          <div className="flex items-start justify-between"><SectionLabel light>New Delhi · Since 2013</SectionLabel><span className="mono hidden text-[10px] uppercase tracking-[.14em] text-[#b4c1c3] sm:block">Infrastructure partner / 01</span></div>
           <div className="max-w-4xl pb-4">
             <h1 className="display max-w-4xl text-5xl font-extrabold leading-[.98] tracking-[-.07em] sm:text-7xl lg:text-[104px]">Security that<br /><span className="text-[#2997ff]">keeps its word.</span></h1>
-            <div className="mt-8 flex max-w-2xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"><p className="max-w-md text-base leading-7 text-[#ccd4d2]">We design, supply, install, test, and commission the systems that let buildings do their work safely.</p><Link href="/products" className="inline-flex w-fit items-center gap-3 border border-[#2997ff] px-5 py-3 text-sm font-bold text-[#2997ff] transition-colors hover:bg-[#2997ff] hover:text-[#172534]">View our systems <ArrowDownRight size={16} /></Link></div>
+            <div className="mt-8 flex max-w-2xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"><p className="max-w-md text-base leading-7 text-[#ccd4d2]">We design, supply, install, test, and commission the systems that let buildings do their work safely.</p><Link href="/products" className="inline-flex w-fit items-center gap-3 border border-[#2997ff] px-5 py-3 text-sm font-bold text-[#2997ff] transition-colors hover:bg-[#2997ff] hover:text-[#172534]">View our services <ArrowDownRight size={16} /></Link></div>
           </div>
         </div>
       </section>
@@ -396,7 +507,7 @@ function Home() {
         <div className="mx-auto max-w-[1440px]"><div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end"><div><SectionLabel>Selected systems</SectionLabel><h2 className="display text-4xl font-extrabold leading-none text-[#172534] sm:text-6xl">Built for the<br />specifics.</h2></div><ArrowLink href="/products">Explore the catalogue</ArrowLink></div>
           <div className="mt-14 grid gap-4 lg:grid-cols-12">
             <Link href="/products/sentinel-4k-dome" className="group relative min-h-[560px] overflow-hidden bg-[#f8f7f3] lg:col-span-7"><img src="/images/camera-detail.png" alt="Sentinel 4K Dome CCTV camera" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" /><div className="absolute inset-0 bg-[#172534]/45" /><div className="absolute bottom-0 left-0 right-0 p-7 text-white sm:p-10"><p className="mono text-[10px] uppercase tracking-[.16em] text-[#2997ff]">CCTV / 01</p><h3 className="display mt-3 text-4xl font-extrabold">Sentinel 4K Dome</h3><p className="mt-3 max-w-sm text-sm leading-6 text-[#d5dedc]">A discreet 4K eye for the places that need a clear answer.</p><span className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-[#2997ff]">View system <ArrowRight size={15} /></span></div></Link>
-             <div className="grid gap-4 lg:col-span-5"><Link href="/products/clearline-access" className="group relative min-h-[270px] overflow-hidden bg-[#172534] text-white"><img src="/images/access-control.png" alt="Clearline access control reader" className="absolute inset-0 h-full w-full object-cover opacity-55 transition-transform duration-700 group-hover:scale-[1.03]" /><div className="absolute inset-0 bg-[#172534]/45" /><div className="relative flex h-full flex-col justify-between p-7 sm:p-8"><p className="mono text-[10px] uppercase tracking-[.16em] text-[#9db0b6]">Access / 02</p><div><h3 className="display text-3xl font-extrabold">Clearline Access</h3><p className="mt-2 text-sm text-[#c6d0ce]">Entry without the visual noise.</p></div></div></Link><Link href="/products/aegis-fire-panel" className="group flex min-h-[270px] flex-col justify-between bg-[#f8f7f3] p-7 text-[#172534] transition-colors hover:bg-[#e5f0ff] sm:p-8"><div className="flex justify-between"><p className="mono text-[10px] uppercase tracking-[.16em] text-[#0066cc]">Fire / 03</p><ArrowUpRight /></div><div><h3 className="display text-3xl font-extrabold">Aegis Fire Panel</h3><p className="mt-2 max-w-xs text-sm leading-6 text-[#65747a]">A clear answer when it matters.</p></div></Link></div>
+            <div className="grid gap-4 lg:col-span-5"><Link href="/products/clearline-access" className="group relative min-h-[270px] overflow-hidden bg-[#172534] text-white"><img src="/images/access-control.png" alt="Clearline access control reader" className="absolute inset-0 h-full w-full object-cover opacity-55 transition-transform duration-700 group-hover:scale-[1.03]" /><div className="absolute inset-0 bg-[#172534]/45" /><div className="relative flex h-full flex-col justify-between p-7 sm:p-8"><p className="mono text-[10px] uppercase tracking-[.16em] text-[#9db0b6]">Access / 02</p><div><h3 className="display text-3xl font-extrabold">Clearline Access</h3><p className="mt-2 text-sm text-[#c6d0ce]">Entry without the visual noise.</p></div></div></Link><Link href="/products/aegis-fire-panel" className="group flex min-h-[270px] flex-col justify-between bg-[#f8f7f3] p-7 text-[#172534] transition-colors hover:bg-[#e5f0ff] sm:p-8"><div className="flex justify-between"><p className="mono text-[10px] uppercase tracking-[.16em] text-[#0066cc]">Fire / 03</p><ArrowUpRight /></div><div><h3 className="display text-3xl font-extrabold">Aegis Fire Panel</h3><p className="mt-2 max-w-xs text-sm leading-6 text-[#65747a]">A clear answer when it matters.</p></div></Link></div>
           </div>
         </div>
       </section>
@@ -407,8 +518,6 @@ function Home() {
     </main>
   </PageShell>;
 }
-
-function ArrowUpRight() { return <ArrowRight size={17} className="-rotate-45" />; }
 
 function About() {
   return <PageShell><main id="main-content">
@@ -425,9 +534,9 @@ function Products() {
   const catalogueProducts = useCatalogueProducts();
   const filtered = useMemo(() => catalogueProducts.filter((p) => (category === 'All systems' || p.category === category) && `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(query.toLowerCase())), [catalogueProducts, category, query]);
   return <PageShell><main id="main-content">
-     <section className="bg-[#172534] px-5 py-20 text-[#f4f2ec] sm:px-8 lg:px-12 lg:py-28"><div className="mx-auto max-w-[1200px]"><SectionLabel light>Systems catalogue</SectionLabel><h1 className="display max-w-4xl text-5xl font-extrabold leading-[.98] sm:text-7xl">The right layer<br /><span className="text-[#2997ff]">for the right place.</span></h1><p className="mt-8 max-w-xl text-lg leading-8 text-[#b9c5c5]">Browse the systems we specify, supply, install and support. Every product is a starting point for a site conversation.</p></div></section>
+    <section className="bg-[#172534] px-5 py-20 text-[#f4f2ec] sm:px-8 lg:px-12 lg:py-28"><div className="mx-auto max-w-[1200px]"><SectionLabel light>Systems catalogue</SectionLabel><h1 className="display max-w-4xl text-5xl font-extrabold leading-[.98] sm:text-7xl">The right layer<br /><span className="text-[#2997ff]">for the right place.</span></h1><p className="mt-8 max-w-xl text-lg leading-8 text-[#b9c5c5]">Browse the systems we specify, supply, install and support. Every product is a starting point for a site conversation.</p></div></section>
     <section className="bg-[#f4f2ec] px-5 py-14 sm:px-8 lg:px-12 lg:py-20"><div className="mx-auto max-w-[1200px]">
-       <div className="flex flex-col gap-6 border-b border-[#d7d4ca] pb-8 lg:flex-row lg:items-center lg:justify-between"><div className="relative w-full max-w-md"><label htmlFor="system-search" className="sr-only">Search systems</label><Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#66757a]" aria-hidden="true" /><input id="system-search" name="search" value={query} onChange={(e) => setQuery(e.target.value)} type="search" autoComplete="off" placeholder="Search systems…" className="h-12 w-full border border-[#cfcac0] bg-[#f8f7f3] pl-11 pr-4 text-base text-[#172534] outline-none focus:border-[#007cae]" /></div><div className="flex flex-wrap gap-2">{categories.map((item) => <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)} className={`min-h-11 border px-3 py-2 text-[11px] font-bold transition-colors ${category === item ? 'border-[#007cae] bg-[#007cae] text-white' : 'border-[#cfcac0] text-[#536168] hover:border-[#007cae] hover:text-[#007cae]'}`}>{item}</button>)}</div></div>
+      <div className="flex flex-col gap-6 border-b border-[#d7d4ca] pb-8 lg:flex-row lg:items-center lg:justify-between"><div className="relative w-full max-w-md"><label htmlFor="system-search" className="sr-only">Search systems</label><Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#66757a]" aria-hidden="true" /><input id="system-search" name="search" value={query} onChange={(e) => setQuery(e.target.value)} type="search" autoComplete="off" placeholder="Search systems…" className="h-12 w-full border border-[#cfcac0] bg-[#f8f7f3] pl-11 pr-4 text-base text-[#172534] outline-none focus:border-[#007cae]" /></div><div className="flex flex-wrap gap-2">{categories.map((item) => <button key={item} type="button" aria-pressed={category === item} onClick={() => setCategory(item)} className={`min-h-11 border px-3 py-2 text-[11px] font-bold transition-colors ${category === item ? 'border-[#007cae] bg-[#007cae] text-white' : 'border-[#cfcac0] text-[#536168] hover:border-[#007cae] hover:text-[#007cae]'}`}>{item}</button>)}</div></div>
       <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{filtered.map((product) => <ProductCard key={product.slug} product={product} />)}</div>
       {filtered.length === 0 && <div className="border border-dashed border-[#cfcac0] py-20 text-center"><CircleAlert className="mx-auto text-[#007cae]" /><h2 className="mt-5 text-xl font-extrabold text-[#172534]">No systems matched that search.</h2><button onClick={() => { setQuery(''); setCategory('All systems'); }} className="mt-4 text-sm font-bold text-[#007cae]">Clear filters</button></div>}
     </div></section>
@@ -477,10 +586,10 @@ function Contact() {
     setStatus('success');
   };
   return <PageShell><main id="main-content">
-    <section className="bg-[#172534] px-5 py-20 text-[#f4f2ec] sm:px-8 lg:px-12 lg:py-28"><div className="mx-auto max-w-[1200px]"><SectionLabel light>New Delhi office</SectionLabel><h1 className="display max-w-4xl text-5xl font-extrabold leading-[.98] sm:text-7xl">Let’s make the<br /><span className="text-[#2997ff]">next step clear.</span></h1><div className="mt-10 flex flex-col gap-2 text-sm text-[#bdc9c8] sm:flex-row sm:gap-8"><a href="tel:+911145670760" className="hover:text-[#2997ff]">+91 11 4567 0760</a><a href="mailto:hello@rgelectronics.in" className="hover:text-[#2997ff]">hello@rgelectronics.in</a></div></div></section>
-    <section className="bg-[#f4f2ec] px-5 py-16 sm:px-8 lg:px-12 lg:py-24"><div className="mx-auto grid max-w-[1200px] gap-14 lg:grid-cols-[1.05fr_.95fr]"><div><SectionLabel>Tell us what you are solving</SectionLabel><h2 className="display max-w-md text-4xl font-extrabold leading-tight text-[#172534]">A useful first conversation does not need a perfect brief.</h2><p className="mt-6 max-w-md text-sm leading-7 text-[#65747a]">Share the basics and a member of our team will come back to you during office hours. For urgent site matters, call us directly.</p><div className="mt-12 border-t border-[#d7d4ca] pt-6"><p className="mono text-[10px] uppercase tracking-[.14em] text-[#65747a]">Office hours</p><p className="mt-3 text-sm font-bold text-[#172534]">Monday–Saturday · 9:30 am–6:30 pm</p><p className="mt-2 text-sm text-[#65747a]">A-18, Okhla Industrial Area, Phase II<br />New Delhi 110020</p></div></div>
-       <form onSubmit={submit} noValidate className="border border-[#d7d4ca] bg-[#f8f7f3] p-6 sm:p-8">{status === 'success' ? <div className="flex min-h-[420px] flex-col items-start justify-center" role="status" aria-live="polite"><div className="flex h-12 w-12 items-center justify-center bg-[#007cae] text-white"><Check size={22} /></div><h2 className="display mt-8 text-3xl font-extrabold text-[#172534]">Message received.</h2><p className="mt-4 max-w-sm text-sm leading-7 text-[#65747a]">Thank you, {form.name || 'there'}. Our New Delhi team will be in touch shortly.</p><button type="button" onClick={() => { setStatus('idle'); setForm({ name: '', company: '', email: '', phone: '', message: '' }); }} className="mt-8 min-h-11 text-sm font-bold text-[#007cae]">Send another enquiry</button></div> : <><div className="grid gap-5 sm:grid-cols-2"><Field id="name" name="name" autoComplete="name" label="Your name" value={form.name} error={errors.name} onChange={(v) => setForm({ ...form, name: v })} required /><Field id="company" name="organization" autoComplete="organization" label="Company / organisation" value={form.company} onChange={(v) => setForm({ ...form, company: v })} /><Field id="email" name="email" autoComplete="email" type="email" label="Work email" value={form.email} error={errors.email} onChange={(v) => setForm({ ...form, email: v })} required /><Field id="phone" name="tel" autoComplete="tel" type="tel" label="Phone number" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} /></div><label htmlFor="message" className="mt-5 block text-xs font-bold text-[#172534]">What can we help with? <span className="text-[#007cae]">*</span><textarea id="message" name="message" autoComplete="off" aria-invalid={Boolean(errors.message)} aria-describedby={errors.message ? 'message-error' : undefined} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={5} className={`mt-2 w-full resize-none border bg-[#f4f2ec] p-3 text-base text-[#172534] outline-none focus:border-[#007cae] ${errors.message ? 'border-[#b33c32]' : 'border-[#cfcac0]'}`} placeholder="A site, a system, a question…" />{errors.message && <span id="message-error" className="mt-1 block text-[11px] font-normal text-[#b33c32]">{errors.message}</span>}</label>{status === 'error' && <p className="mt-4 flex items-center gap-2 text-xs font-bold text-[#b33c32]" role="alert" aria-live="polite"><CircleAlert size={15} aria-hidden="true" /> Please check the highlighted fields.</p>}<button type="submit" className="mt-6 inline-flex min-h-11 items-center bg-[#007cae] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#00688f]">Send enquiry <ArrowRight size={15} className="ml-3" aria-hidden="true" /></button><p className="mt-5 text-[11px] leading-5 text-[#7b8789]">Your details are used only to respond to this enquiry.</p></>}</form></div></section>
-    <section className="bg-[#e6e3db] px-5 py-16 sm:px-8 lg:px-12 lg:py-20"><div className="mx-auto max-w-[1200px]"><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><SectionLabel>Find us</SectionLabel><h2 className="display text-4xl font-extrabold text-[#172534]">Okhla Industrial Area, Phase II.</h2></div><a href="https://www.openstreetmap.org/?mlat=28.535&mlon=77.276#map=15/28.535/77.276" target="_blank" rel="noreferrer" className="text-sm font-bold text-[#0066cc]">Open in maps <ArrowUpRight /></a></div><div className="relative mt-10 h-[360px] overflow-hidden border border-[#cfcac0] bg-[#d7d4ca]"><iframe title="R G Electronics service area map" className="h-full w-full grayscale-[.7] contrast-[.9]" src="https://www.openstreetmap.org/export/embed.html?bbox=77.235%2C28.505%2C77.315%2C28.565&amp;layer=mapnik&amp;marker=28.535%2C77.276" /><div className="pointer-events-none absolute bottom-5 left-5 bg-[#172534] px-4 py-3 text-white"><p className="mono text-[9px] uppercase tracking-[.14em] text-[#2997ff]">Service area</p><p className="mt-1 text-xs font-bold">Delhi NCR · On site</p></div></div></div></section>
+    <section className="bg-[#172534] px-5 py-20 text-[#f4f2ec] sm:px-8 lg:px-12 lg:py-28"><div className="mx-auto max-w-[1200px]"><SectionLabel light>New Delhi office</SectionLabel><h1 className="display max-w-4xl text-5xl font-extrabold leading-[.98] sm:text-7xl">Let’s make the<br /><span className="text-[#2997ff]">next step clear.</span></h1><div className="mt-10 flex flex-col gap-2 text-sm text-[#bdc9c8] sm:flex-row sm:gap-8"><a href="tel:+919953440640" className="hover:text-[#2997ff]">+91 99534 40640</a><a href="mailto:sales@rgelectronics.co.in" className="hover:text-[#2997ff]">sales@rgelectronics.co.in</a></div></div></section>
+    <section className="bg-[#f4f2ec] px-5 py-16 sm:px-8 lg:px-12 lg:py-24"><div className="mx-auto grid max-w-[1200px] gap-14 lg:grid-cols-[1.05fr_.95fr]"><div><SectionLabel>Tell us what you are solving</SectionLabel><h2 className="display max-w-md text-4xl font-extrabold leading-tight text-[#172534]">A useful first conversation does not need a perfect brief.</h2><p className="mt-6 max-w-md text-sm leading-7 text-[#65747a]">Share the basics and a member of our team will come back to you during office hours. For urgent site matters, call us directly.</p><div className="mt-12 border-t border-[#d7d4ca] pt-6"><p className="mono text-[10px] uppercase tracking-[.14em] text-[#65747a]">Office hours</p><p className="mt-3 text-sm font-bold text-[#172534]">Monday–Saturday · 9:30 am–6:30 pm</p><p className="mt-2 text-sm text-[#65747a]">Plot No. 5, UG Floor<br />South Ganesh Nagar, New Delhi 110092</p></div></div>
+      <form onSubmit={submit} noValidate className="border border-[#d7d4ca] bg-[#f8f7f3] p-6 sm:p-8">{status === 'success' ? <div className="flex min-h-[420px] flex-col items-start justify-center" role="status" aria-live="polite"><div className="flex h-12 w-12 items-center justify-center bg-[#007cae] text-white"><Check size={22} /></div><h2 className="display mt-8 text-3xl font-extrabold text-[#172534]">Message received.</h2><p className="mt-4 max-w-sm text-sm leading-7 text-[#65747a]">Thank you, {form.name || 'there'}. Our New Delhi team will be in touch shortly.</p><button type="button" onClick={() => { setStatus('idle'); setForm({ name: '', company: '', email: '', phone: '', message: '' }); }} className="mt-8 min-h-11 text-sm font-bold text-[#007cae]">Send another enquiry</button></div> : <><div className="grid gap-5 sm:grid-cols-2"><Field id="name" name="name" autoComplete="name" label="Your name" value={form.name} error={errors.name} onChange={(v) => setForm({ ...form, name: v })} required /><Field id="company" name="organization" autoComplete="organization" label="Company / organisation" value={form.company} onChange={(v) => setForm({ ...form, company: v })} /><Field id="email" name="email" autoComplete="email" type="email" label="Work email" value={form.email} error={errors.email} onChange={(v) => setForm({ ...form, email: v })} required /><Field id="phone" name="tel" autoComplete="tel" type="tel" label="Phone number" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} /></div><label htmlFor="message" className="mt-5 block text-xs font-bold text-[#172534]">What can we help with? <span className="text-[#007cae]">*</span><textarea id="message" name="message" autoComplete="off" aria-invalid={Boolean(errors.message)} aria-describedby={errors.message ? 'message-error' : undefined} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={5} className={`mt-2 w-full resize-none border bg-[#f4f2ec] p-3 text-base text-[#172534] outline-none focus:border-[#007cae] ${errors.message ? 'border-[#b33c32]' : 'border-[#cfcac0]'}`} placeholder="A site, a system, a question…" />{errors.message && <span id="message-error" className="mt-1 block text-[11px] font-normal text-[#b33c32]">{errors.message}</span>}</label>{status === 'error' && <p className="mt-4 flex items-center gap-2 text-xs font-bold text-[#b33c32]" role="alert" aria-live="polite"><CircleAlert size={15} aria-hidden="true" /> Please check the highlighted fields.</p>}<button type="submit" className="mt-6 inline-flex min-h-11 items-center bg-[#007cae] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#00688f]">Send enquiry <ArrowRight size={15} className="ml-3" aria-hidden="true" /></button><p className="mt-5 text-[11px] leading-5 text-[#7b8789]">Your details are used only to respond to this enquiry.</p></>}</form></div></section>
+    <section className="bg-[#e6e3db] px-5 py-16 sm:px-8 lg:px-12 lg:py-20"><div className="mx-auto max-w-[1200px]"><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><SectionLabel>Find us</SectionLabel><h2 className="display text-4xl font-extrabold text-[#172534]">South Ganesh Nagar, New Delhi.</h2></div><a href="https://www.openstreetmap.org/?mlat=28.535&mlon=77.276#map=15/28.535/77.276" target="_blank" rel="noreferrer" className="text-sm font-bold text-[#0066cc]">Open in maps <ArrowUpRight /></a></div><div className="relative mt-10 h-[360px] overflow-hidden border border-[#cfcac0] bg-[#d7d4ca]"><iframe title="R G Electronics service area map" className="h-full w-full grayscale-[.7] contrast-[.9]" src="https://www.openstreetmap.org/export/embed.html?bbox=77.235%2C28.505%2C77.315%2C28.565&amp;layer=mapnik&amp;marker=28.535%2C77.276" /><div className="pointer-events-none absolute bottom-5 left-5 bg-[#172534] px-4 py-3 text-white"><p className="mono text-[9px] uppercase tracking-[.14em] text-[#2997ff]">Service area</p><p className="mt-1 text-xs font-bold">Delhi NCR · On site</p></div></div></div></section>
   </main></PageShell>;
 }
 
@@ -501,11 +610,43 @@ function Router() {
       description.setAttribute('name', 'description');
       document.head.appendChild(description);
     }
-    description.setAttribute('content', 'R G Electronics specifies, installs and supports security and communications infrastructure for buildings across Delhi NCR.');
     window.history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
   }, [location]);
-  return <ErrorBoundary resetKey={location}><AnimatePresence mode="wait" initial={false}><motion.div key={location} initial={reduceMotion ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduceMotion ? undefined : { opacity: 0, y: -8 }} transition={{ duration: reduceMotion ? 0 : .35, ease: [.22, 1, .36, 1] }}><Switch><Route path="/" component={Home} /><Route path="/about" component={About} /><Route path="/products" component={Products} /><Route path="/products/:slug" component={ProductDetail} /><Route path="/contact" component={Contact} /><Route><PageShell><main id="main-content" className="px-5 py-32 text-center"><h1 className="display text-5xl font-extrabold text-[#172534]">Page not found.</h1><Link href="/" className="mt-6 inline-block text-[#007cae]">Return home</Link></main></PageShell></Route></Switch></motion.div></AnimatePresence></ErrorBoundary>;
+  return (
+    <>
+      <a href="#main-content" className="skip-link">Skip to content</a>
+      <Header />
+      <ErrorBoundary resetKey={location}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.split('?')[0]}
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+            transition={{ duration: reduceMotion ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/about" component={About} />
+              <Route path="/products" component={Products} />
+              <Route path="/products/:slug" component={ProductDetail} />
+              <Route path="/contact" component={Contact} />
+              <Route>
+                <PageShell>
+                  <main id="main-content" className="px-5 py-32 text-center">
+                    <h1 className="display text-5xl font-extrabold text-[#172534]">Page not found.</h1>
+                    <Link href="/" className="mt-6 inline-block text-[#007cae]">Return home</Link>
+                  </main>
+                </PageShell>
+              </Route>
+            </Switch>
+          </motion.div>
+        </AnimatePresence>
+      </ErrorBoundary>
+      <Footer />
+    </>
+  );
 }
 
 function App() {
